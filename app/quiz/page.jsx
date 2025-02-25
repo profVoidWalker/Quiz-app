@@ -1,56 +1,21 @@
 'use client'
 import React, {useState} from 'react'
 import { quiz } from '../data'
+import { useQuiz } from '../context/quizContext'
 
 const page = () => {
-  const [activeQuestion, setActiveQuestion] = useState(0)
-  const [selectedAnswer, setSelectedAnswer] = useState('')
-  const [checked, setChecked] = useState(false)
-  const [selectedAnswerIndex, setSelectedAnswerIndex] = useState(null)
-  const [showResult, setShowResult] = useState(false)
-  const [result, setResult] = useState({
-    score: 0,
-    correctAnswers: 0,
-    wrongAnswers: 0,
-  })
-
-  const { questions } = quiz
-  const { question, answers, correctAnswer } = questions[activeQuestion]
+  const { state, dispatch } = useQuiz();
+  const { questions, activeQuestion, selectedAnswer, checked, selectedAnswerIndex, showResult, result } = state;
+  const { question, answers, correctAnswer } = questions[activeQuestion];
 
   // Select and check answer
   const onAnswerSelected = (answer, idx) => {
-    setChecked(true)
-    setSelectedAnswerIndex(idx)
-    if (answer === correctAnswer) {
-      setSelectedAnswer(true)
-      console.log('true')
-    } else {
-      setSelectedAnswer(false)
-      console.log('false')
-    }
+    dispatch({ type: "ANSWER_QUESTION", payload: { answer, index: idx } })
   }
 
   // Calculate score and increment to next question
   const nextQuestion = () => {
-    setSelectedAnswerIndex(null)
-    setResult((prev) => 
-      selectedAnswer ? 
-      {
-        ...prev,
-        score: prev.score + 5,
-        correctAnswers: prev.correctAnswers + 1
-      } : {
-        ...prev,
-        wrongAnswers: prev.wrongAnswers + 1,
-      }
-    )
-    if (activeQuestion !== questions.length - 1) {
-      setActiveQuestion((prev) => prev + 1)
-    } else {
-      setActiveQuestion(0)
-      setShowResult(true)
-    }
-    setChecked(false)
+    dispatch({ type: "NEXT_QUESTION" })
   }
 
   return (
@@ -66,7 +31,7 @@ const page = () => {
             </h2>
 
             <div className='quiz-container'>
-              <h3>{questions[activeQuestion].question}</h3>
+              <h3>{question}</h3>
               {answers.map((answer, idx) => (
                 <li 
                   key={idx}
@@ -96,7 +61,7 @@ const page = () => {
             <h2>Results</h2>
           
             <div className='quiz-container'>
-              <h3>Overall {(result.score / 25) * 100}%</h3>
+              <h3>Overall {(result.score / (questions.length * 5)) * 100}%</h3>
               <p>
                 Total Questions: <span>{questions.length}</span>
               </p>
@@ -109,7 +74,7 @@ const page = () => {
               <p>
                 Wrong Answers: <span>{result.wrongAnswers}</span>
               </p>
-              <button onClick={() => window.location.reload()}>Restart</button>
+              <button onClick={() => dispatch({ type: "RESTART" })}>Restart</button>
             </div>
           </div>
         )}
